@@ -1,0 +1,5 @@
+/* CSS 파일에 추가 */
+.custom-cell-style {
+  padding: 4px 8px; /* 원하는 패딩 값을 지정하세요 */
+  line-height: 1.2; /* 원하는 높이 값을 지정하세요 */
+}

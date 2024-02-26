@@ -1,0 +1,11 @@
+prod:
+    scheme: "sftp"
+    host: "210.112.120.185"
+    port: "22"
+    user: "incar"
+    pass: "#!incar"
+    path:
+        local: build/
+        remote: /proj/project/devops/
+    include:
+        "build/**/*": "/"
