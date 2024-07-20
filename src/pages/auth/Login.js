@@ -83,6 +83,8 @@ export default function Login() {
     ? {
         sawon_cd: sawon_cd,
         password: password,
+        // sawon_cd: data.get('sawon_cd'),
+        // password: data.get('password'),
       }
     : {
         sawon_cd: data.get('sawon_cd'),
