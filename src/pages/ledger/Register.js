@@ -270,7 +270,7 @@ export default function Register() {
             console.log("windowinnerHeight"+window.innerHeight)
         // 여기에서 화면 크기에 맞게 계산된 높이를 설정하십시오.
         const windowHeight = window.innerHeight;
-        const headerHeight = 60; // 예시로 설정된 헤더의 높이
+        const headerHeight = 210; // 예시로 설정된 헤더의 높이
         setGridHeight(windowHeight - headerHeight);
         };
     
@@ -285,9 +285,31 @@ export default function Register() {
         window.removeEventListener('resize', handleResize);
         };
     }, [gridHeight]);
-    // 데이터 그리드 내용
-    const dataGridContent = (
-        <Box sx={{ width: '100%', minHeight: gridHeight, overflowX: 'auto' }}>
+    // 데이터 그리드 내용 , minHeight: 650, overflowX: 'auto'
+    const dataGridContent = data!=='' ? (
+        <Box sx={{ width: '100%', height: 660 }}>
+            <DataGrid
+                density="compact"
+                rowHeight={40}
+                rows={data}
+                columns={columns}
+                // slots={{
+                //     toolbar: CustomToolbar,
+                //   }}
+                initialState={{
+                    pagination: {
+                        paginationModel: {
+                        pageSize: 20,
+                        },
+                    },
+                }}
+                pageSizeOptions={[5,10,20,100]}
+                // checkboxSelection
+                disableRowSelectionOnClick
+            />
+        </Box>
+    ):(
+        <Box sx={{ width: '100%', height: 660, overflowX: 'auto' }}>
             <DataGrid
                 density="compact"
                 rowHeight={40}
@@ -393,11 +415,14 @@ export default function Register() {
         if (file) {
             formData.append('file', file);
         }
-        for (const pair of formData.entries()) {
-            console.log(pair[0] + ': ' + pair[1]);
-        }
+        // for (const pair of formData.entries()) {
+        //     console.log(pair[0] + ': ' + pair[1]);
+        // }
         
         // const send_data = {requestSql:detailData.request_sql, is_valid: isChecked ? '1' : '2',};
+        // for (let [key, value] of formData.entries()) {
+        //     console.log(`${key}: ${value}`);
+        // }
         axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
         axios.defaults.headers.post['Content-Type'] = 'multipart/form-data'; // 이 부분 추가
         axios.patch(url+`/api/ledgerDatabase/jubsu/${detailData.pk}`, formData)
