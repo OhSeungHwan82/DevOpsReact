@@ -19,6 +19,19 @@ import {
   } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import Stack from '@mui/material/Stack';
+import dayjs from 'dayjs';
+
 export default function Register() {
     const [searchJtname, setSearchJtname] = React.useState('');
     const [searchJrname, setSearchJrname] = React.useState('');
@@ -34,14 +47,27 @@ export default function Register() {
     const [isButtonDelEnabled, setButtonDelEnabled] = useState(true);
     const url = useSelector((state) => state.baseurl.url);
     const authToken = useSelector((state) => state.authToken.authToken);
+    const sawon_cd = useSelector((state) => state.user.sawon_cd);
     const [loading, setLoading] = useState(false);
+    const [selectedDate, setSelectedDate] = useState(null);
+    const [formattedDate, setFormattedDate] = useState('');
+
+    function createData(gubun, name, value) {
+        return { gubun, name, value };
+    }
+    
+    const initialParams = [
+    createData('Param1', '', ''),
+    createData('Param2', '', ''),
+    ];
+    const [params, setParams] = useState(initialParams);
 
     const columns = [
         { field: 'id', headerName: 'ID', width: 50 },
         { field: 'create_name', headerName: '요청자', width: 70, editable: false},
         { field: 'gubun_nm', headerName: '구분', width: 70, editable: false},
-        { field: 'jt_name', headerName: '스케줄명', width: 150, editable: false},
-        { field: 'jr_name', headerName: 'JOB명', width: 230, editable: false},
+        { field: 'jt_name', headerName: '스케줄명', width: 250, editable: false},
+        { field: 'jr_name', headerName: 'JOB명', width: 300, editable: false},
         { field: 'status_nm', headerName: '상태', width: 70, editable: false},
         { field: 'create_date', headerName: '등록일자', width: 180, editable: false},
         { field: 'start_date', headerName: '시작일자', width: 180, editable: false},
@@ -67,6 +93,7 @@ export default function Register() {
     useEffect(() => {
         // 초기화 데이터를 가져오는 함수
         const fetchData = async () => {
+            let detailGubun;
             try {
                 console.log("authToken"+authToken);
                 const response = await axios.get(url + `/api/public/commcode?cl_code=12&use_yb=1`, {
@@ -77,6 +104,30 @@ export default function Register() {
                 console.log(response.data);
                 if (isMounted) {
                     setCombo01(response.data.list);
+                    const gubunArr = response.data.list;
+                    detailGubun = gubunArr.filter(status => status.code_id==='3');
+                }
+            } catch (error) {
+                console.error('데이터 불러오기 실패:', error);
+            }
+
+            try {
+                const response = await axios.get(url + `/api/public/commcode?cl_code=15&use_yb=1`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                console.log(response.data);
+                if (isMounted) {
+                    const adminArr = response.data.list;
+                    if(adminArr.some(item => item.code_id === sawon_cd)){
+                        console.log("관리자가 맞음");
+                        setCombo01(detailGubun);
+                        setSelectedOption('3');
+                    }else{
+                        console.log("관리자가 아님");
+                        // setButtonCreateEnabled(false);
+                    }
                 }
             } catch (error) {
                 console.error('데이터 불러오기 실패:', error);
@@ -88,7 +139,7 @@ export default function Register() {
         return ()=>{
             isMounted = false;
         };
-    }, [authToken,url]); // useEffect의 두 번째 인자로 authToken을 추가하여 authToken이 변경될 때마다 실행되도록 함
+    }, [authToken,url, sawon_cd]); // useEffect의 두 번째 인자로 authToken을 추가하여 authToken이 변경될 때마다 실행되도록 함
 
     const handleSearchJtnameChange = (event) => {
         setSearchJtname(event.target.value);
@@ -99,13 +150,23 @@ export default function Register() {
     const handleSelectChange = (event) => {
         setSelectedOption(event.target.value);
     };
+    
+    const handleDateChange = (newDate) => {
+        setSelectedDate(newDate);
+        if (newDate) {
+            setFormattedDate(dayjs(newDate).format('YYYYMM')); // 원하는 형식으로 문자열 변환
+        } else {
+            setFormattedDate('');
+        }
+    };
 
     // list 조회버튼 클릭
     const btnSearchClickHandler = () => {
         setLoading(true);
         console.log("authTokenauthTokenauthTokenauthTokenauthTokenauthToken"+authToken);
+        console.log("formattedDate : "+formattedDate);
         axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`
-        axios.get(url+`/api/batchJob/jobRequest?gubun=`+selectedOption+`&jt_name=`+searchJtname+`&jr_name=`+searchJrname+`&page=1&limit=10000`)
+        axios.get(url+`/api/batchJob/jobRequest?gubun=`+selectedOption+`&jt_name=`+searchJtname+`&jr_name=`+searchJrname+`&jr_startdate=`+formattedDate+`&page=1&limit=10000`)
         .then((response) => {
             setLoading(false);
             console.log(response.data);
@@ -136,6 +197,15 @@ export default function Register() {
                 setDetailData(response.data);
                 setButtonSaveEnabled(response.data.authSave === true);
                 setButtonDelEnabled(response.data.authDel === true);
+                const updatedParams = response.data.params.map((param, index) => ({
+                    gubun: `Param${index + 1}`,
+                    name: param.name || '',
+                    value: param.value || '',
+                }));
+                if(updatedParams){
+                console.log(updatedParams);
+                setParams(updatedParams);
+                }
             })
             .catch((error) => {
                 setLoading(false);
@@ -205,6 +275,21 @@ export default function Register() {
                       }}
                     />
                 </Grid>
+                <Grid item>
+                    <LocalizationProvider dateAdapter={AdapterDayjs} dateFormats={{monthShort:"M"}}>
+                        <Stack>
+                            <DatePicker
+                            format='YYYY-MM'
+                            label="시작일자"
+                            views={['year','month']}
+                            showDaysOutsideCurrentMonth
+                            value={selectedDate}
+                            onChange={handleDateChange}
+                            renderInput={(params) => <TextField {...params}/>}
+                            />
+                        </Stack>
+                    </LocalizationProvider>
+                </Grid>     
                 <Grid item>
                     <Button variant="contained" color="primary" size="small" onClick={btnSearchClickHandler}>
                     찾기
@@ -306,7 +391,7 @@ export default function Register() {
 
     // 팝업 내용
     const dialogContent = (
-        <div style={{ width: '700px', height:'500px' }}>
+        <div style={{ width: '700px', height:'650px' }}>
             <DialogTitle>
                 작업요청 상세
             </DialogTitle>
@@ -472,6 +557,35 @@ export default function Register() {
                     />
                 </div>
                 <div style={{ marginTop: '20px' }}>
+                    <TableContainer component={Paper} style={{width:"610px"}} >
+                        <Table sx={{ minWidth: 610 }} aria-label="caption table">
+                            <TableHead>
+                            <TableRow>
+                                <TableCell sx={{padding:'4px'}} align="center">매개변수</TableCell>
+                                <TableCell sx={{padding:'4px'}} align="center">Name</TableCell>
+                                <TableCell sx={{padding:'4px'}} align="center">Value</TableCell>
+                            </TableRow>
+                            </TableHead>
+                            <TableBody>
+                            {params.map((row, index) => (
+                                <TableRow key={row.gubun}>
+                                <TableCell component="th" scope="row" align="center">
+                                    {row.gubun}
+                                </TableCell>
+                                <TableCell component="th" scope="row" align="center">
+                                    {row.name}
+                                </TableCell>
+                                <TableCell component="th" scope="row" align="center">
+                                    {row.value}
+                                </TableCell>
+                                </TableRow>
+                            ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                
+                </div>
+                <div style={{ marginTop: '20px' }}>
                     <TextField
                         id="log"
                         label="실행기록"
@@ -509,7 +623,7 @@ export default function Register() {
                     <div></div>
                 )}
                 <div style={{ marginLeft: 'auto' }}>
-                    <Button variant="contained" size="small" color="primary" onClick={handleExecData} disabled={!isButtonSaveEnabled}>
+                    <Button variant="contained" size="small" color="primary" onClick={handleExecData} disabled={!isButtonSaveEnabled} style={{ display: detailData.gubun==='3' ? "none" : "inline-block"}}>
                     실행
                     </Button>
                     <span style={{ marginRight: '10px' }}></span>
