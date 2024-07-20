@@ -29,6 +29,8 @@ import EditNoteIcon from '@mui/icons-material/EditNote';
 import AlarmIcon from '@mui/icons-material/Alarm';
 import AddAlarmIcon from '@mui/icons-material/AddAlarm';
 import { useSelector } from "react-redux";
+import CodeIcon from '@mui/icons-material/Code';
+import PublicCommCode from '../public/CommCode';
 
 const drawerWidth = 240;
 
@@ -112,22 +114,28 @@ export default function MiniDrawer() {
   };
   console.log("111page",page)
   let initialPageElement;
+  let jtmenuflag ='none';
   if (page === '1') {
     initialPageElement = <LedgerRegister />;
   } else if (page === '2') {
     initialPageElement = <LedgerRevive />;
   } else if (page === '3') {
     initialPageElement = <JobTemplates />;
+    jtmenuflag = 'block';
   } else if (page === '4') {
     initialPageElement = <JobRequest />;
   }else {
     initialPageElement = <LedgerRegister />;
   }
   let menuflag ='';
+  let lrmenuflag ='';
   if (url === 'http://127.0.0.1:8000') {
     menuflag = 'flex';
+    lrmenuflag = 'block';
+    jtmenuflag = 'block';
   }else{
     menuflag = 'none';
+    lrmenuflag = 'none';
   }
   // console.log("initialPageElement",initialPageElement)
   return (
@@ -153,13 +161,13 @@ export default function MiniDrawer() {
           </Typography>
         </Toolbar>
       </AppBar>
-      <Drawer variant="permanent" open={open} style={{ display: menuflag}}>
+      <Drawer variant="permanent" open={open}>
         <DrawerHeader>
           <IconButton onClick={handleDrawerClose}>
             {theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
           </IconButton>
         </DrawerHeader>
-        <List>
+        <List style={{ display: lrmenuflag}}>
           {['원장변경', '원장복구'].map((text, index) => (
             <ListItem key={text} disablePadding sx={{ display: 'block' }}>
               <ListItemButton
@@ -186,7 +194,7 @@ export default function MiniDrawer() {
           ))}
         </List>
         <Divider />
-        <List>
+        <List style={{ display: jtmenuflag}}>
           {['작업목록', '작업요청'].map((text, index) => (
             <ListItem key={text} disablePadding sx={{ display: 'block' }}>
               <ListItemButton
@@ -206,6 +214,33 @@ export default function MiniDrawer() {
                   }}
                 >
                   {index % 2 === 0 ? <AddAlarmIcon /> : <AlarmIcon />}
+                </ListItemIcon>
+                <ListItemText primary={text} sx={{ opacity: open ? 1 : 0 }} />
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </List>
+        <Divider />
+        <List style={{ display: jtmenuflag}}>
+          {['공통코드관리'].map((text, index) => (
+            <ListItem key={text} disablePadding sx={{ display: 'block' }}>
+              <ListItemButton
+                sx={{
+                  minHeight: 48,
+                  justifyContent: open ? 'initial' : 'center',
+                  px: 2.5,
+                }}
+                component={Link}
+                to='./public/CommCode'
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 0,
+                    mr: open ? 3 : 'auto',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <CodeIcon />
                 </ListItemIcon>
                 <ListItemText primary={text} sx={{ opacity: open ? 1 : 0 }} />
               </ListItemButton>
@@ -244,6 +279,7 @@ export default function MiniDrawer() {
           <Route path="/ledger/revive" element={<LedgerRevive/>}/>
           <Route path="/job/templates" element={<JobTemplates/>}/>
           <Route path="/job/request" element={<JobRequest/>}/>
+          <Route path="/public/commcode" element={<PublicCommCode/>}/>
       </Routes>
     </Box>
   );
